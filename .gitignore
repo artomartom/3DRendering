@@ -1,7 +1,8 @@
 Source/Shader/Release/
 Source/Shader/Debug/
+Build/
 Log.txt
-CompileShaders.ps1
+compileShaderbyHand.ps1
 .vscode/ 
 .PSBC
 Log.txt

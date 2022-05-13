@@ -9,7 +9,7 @@
 using ::Microsoft::WRL::ComPtr;
 using namespace ::DirectX;
 
-DeviceResource::DeviceResource(_COM_Outptr_result_maybenull_ ID3D11DeviceContext **ppContext, _Out_ HRESULT *hr)
+DeviceResource::DeviceResource(_COM_Outptr_ ID3D11DeviceContext **ppContext, _Out_ HRESULT *hr)
     : m_numBackBuffers{2}
 {
    HRESULT localhr{};
@@ -49,8 +49,8 @@ HRESULT DeviceResource::CreateSizeDependentDeviceResources(
     _In_ const HWND &windowHandle,
     _In_ D3D11_VIEWPORT NewViewPort,
     _In_opt_ ID3D11DeviceContext *pContext,
-    __inout_opt ID3D11Texture2D **ppRTVBuffer,
-    __inout_opt ID3D11RenderTargetView **ppRTV)
+    _Inout_ ID3D11Texture2D **ppRTVBuffer,
+    _Inout_ ID3D11RenderTargetView **ppRTV)
 {
    HRESULT hr{};
 
@@ -72,8 +72,8 @@ HRESULT DeviceResource::CreateSizeDependentDeviceResources(
 
       H_FAIL(hr = m_pSwapChain->ResizeBuffers(
                  GetNumBackBuffer(),
-                 NewViewPort.Width,
-                 NewViewPort.Height,
+                 static_cast<UINT>(NewViewPort.Width),
+                 static_cast<UINT>(NewViewPort.Height),
                  DXGI_FORMAT_UNKNOWN,
                  0u));
 
@@ -118,12 +118,12 @@ HRESULT DeviceResource::CreateSizeDependentDeviceResources(
 
 HRESULT CreateDeviceResources()
 {
-   HRESULT hr{};
+   HRESULT hr{S_OK};
 
-   return S_OK;
+   return hr;
 };
 
-HRESULT DeviceResource::CompileSOFromFile(_In_ LPCWSTR srcFile, _In_ LPCSTR entryPoint, _In_ LPCSTR profile, _COM_Outptr_result_maybenull_ ID3DBlob **blob)
+HRESULT DeviceResource::CompileSOFromFile(_In_ LPCWSTR srcFile, _In_ LPCSTR entryPoint, _In_ LPCSTR profile, _COM_Outptr_ ID3DBlob **blob)
 {
    if (!srcFile || !entryPoint || !profile || !blob)
       return E_INVALIDARG;
@@ -155,8 +155,8 @@ HRESULT DeviceResource::CreateVertexShader(
     _In_ UINT count,
     _In_reads_(byteCodeLength) const void *pShaderByteCode,
     _In_ SIZE_T byteCodeLength,
-    _COM_Outptr_result_maybenull_ ID3D11VertexShader **ppShader,
-    _COM_Outptr_result_maybenull_ ID3D11InputLayout **pInputLayout)
+    _COM_Outptr_ ID3D11VertexShader **ppShader,
+    _COM_Outptr_ ID3D11InputLayout **pInputLayout)
 {
    HRESULT hr{};
    if (H_FAIL(hr = m_pDevice->CreateVertexShader(
@@ -172,8 +172,8 @@ HRESULT DeviceResource::CreateVertexShaderFromBlob(
     _In_reads_(count) const D3D11_INPUT_ELEMENT_DESC *pDescs,
     _In_ UINT count,
     _In_ ID3DBlob *Blob,
-    _COM_Outptr_result_maybenull_ ID3D11VertexShader **ppShader,
-    _COM_Outptr_result_maybenull_ ID3D11InputLayout **pInputLayout)
+    _COM_Outptr_ ID3D11VertexShader **ppShader,
+    _COM_Outptr_ ID3D11InputLayout **pInputLayout)
 {
    return CreateVertexShader(pDescs, count, Blob->GetBufferPointer(), Blob->GetBufferSize(), ppShader, pInputLayout);
 };
@@ -181,8 +181,8 @@ HRESULT DeviceResource::CreateVertexShaderFromFile(
     LPCWSTR filename,
     _In_reads_(count) const D3D11_INPUT_ELEMENT_DESC *pDescs,
     _In_ UINT count,
-    _COM_Outptr_result_maybenull_ ID3D11VertexShader **ppShader,
-    _COM_Outptr_result_maybenull_ ID3D11InputLayout **pInputLayout)
+    _COM_Outptr_ ID3D11VertexShader **ppShader,
+    _COM_Outptr_ ID3D11InputLayout **pInputLayout)
 {
    HRESULT hr{};
    ComPtr<ID3DBlob> blob{};
@@ -194,21 +194,21 @@ HRESULT DeviceResource::CreateVertexShaderFromFile(
 HRESULT DeviceResource::CreatePixelShader(
     _In_reads_(byteCodeLength) const void *pShaderByteCode,
     _In_ SIZE_T byteCodeLength,
-    _COM_Outptr_result_maybenull_ ID3D11PixelShader **ppShader)
+    _COM_Outptr_ ID3D11PixelShader **ppShader)
 {
    return m_pDevice->CreatePixelShader(pShaderByteCode, byteCodeLength, nullptr, ppShader);
 };
 
 HRESULT DeviceResource::CreatePixelShaderFromBlob(
     _In_ ID3DBlob *Blob,
-    _COM_Outptr_result_maybenull_ ID3D11PixelShader **ppShader)
+    _COM_Outptr_ ID3D11PixelShader **ppShader)
 {
    return CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), ppShader);
 };
 
 HRESULT DeviceResource::CreatePixelShaderFromFile(
     LPCWSTR filename,
-    _COM_Outptr_result_maybenull_ ID3D11PixelShader **ppShader)
+    _COM_Outptr_ ID3D11PixelShader **ppShader)
 {
    HRESULT hr{};
    ComPtr<ID3DBlob> blob{};

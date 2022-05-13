@@ -23,6 +23,7 @@ public:
     MessageBeep(5);
     return 0;
   };
+
   void OnWindowActivate(_In_ const ::Window::ActivateArgs &args) noexcept
   {
 
@@ -39,6 +40,7 @@ public:
     {
       CASE(VK_ESCAPE, { CoreApp::Close(); });
       CASE(VK_SPACE, { Renderer::Timer.Switch(); });
+      CASE(VK_TAB, { Renderer::SwitchTopology(); });
     }
   };
 
@@ -50,7 +52,7 @@ public:
     m_pDeviceResource = std::make_unique<DeviceResource>(&m_pContext, &hr);
     if (H_OK(hr))
     {
-      // CreateSizeDependentDeviceResources is not called from here because of OnSizeChanged message being send automatically  after OnCreate's success
+      // CreateSizeDependentDeviceResources is not called from here because of OnSizeChanged message being send automatically after OnCreate's success
       if (H_OK(hr = Renderer::Initialize()))
       {
         Renderer::SetPipeLine();
@@ -73,8 +75,10 @@ public:
 
     switch (args.m_Type)
     {
-      CASE(::Window::SizeChangedArgs::Type::Minimized, {m_pDeviceResource->GetSwapChain()->SetFullscreenState(false, nullptr); break; });
-      CASE(::Window::SizeChangedArgs::Type::Maximized, {m_pDeviceResource->GetSwapChain()->SetFullscreenState(true, nullptr); break; });
+      CASE(::Window::SizeChangedArgs::Type::Minimized, { m_pDeviceResource->GetSwapChain()->SetFullscreenState(false, nullptr); });
+      CASE(::Window::SizeChangedArgs::Type::Maximized, { m_pDeviceResource->GetSwapChain()->SetFullscreenState(true, nullptr); });
+    default:
+      break;
     }
     if (m_ViewPort.Width == NewWidth && m_ViewPort.Height == NewHeight)
     {
@@ -82,11 +86,8 @@ public:
     }
     else
     {
-
-      Renderer::m_ViewPort.Width = NewWidth;
-      Renderer::m_ViewPort.Height = NewHeight;
-      m_pDeviceResource->CreateSizeDependentDeviceResources(m_Handle, m_ViewPort, m_pContext.Get(), &m_pRenderTarget, &m_pRTV);
       Renderer::UpdateViewPortSizeBuffer(NewWidth, NewHeight);
+      m_pDeviceResource->CreateSizeDependentDeviceResources(m_Handle, m_ViewPort, m_pContext.Get(), &m_pRenderTarget, &m_pRTV);
     }
   };
 
@@ -121,8 +122,8 @@ private:
   bool m_ShouldDraw{true};
   bool m_ShouldClose{false};
 
-  template <class TCoreWindow>
-  friend int __stdcall peekRun(TCoreWindow &&window)
+  template <class TWindow>
+  friend int __stdcall peekRun(TWindow &&window)
   {
     if (window.m_ShouldClose)
     {
@@ -130,16 +131,13 @@ private:
       return 1;
     };
     ::MSG messages{};
-    //   char updateCount[20]{ };
     while (messages.message != WM_QUIT)
     {
       ::PeekMessageW(&messages, 0, 0, 0, PM_REMOVE);
       ::TranslateMessage(&messages);
       ::DispatchMessageW(&messages);
-
-      window.App::Draw();
-      //::snprintf(updateCount, _countof(updateCount), "Updates/sec %1.0f", 1.f/Renderer::Timer.GetDelta<float>());
-      // window.SetHeader(updateCount);
+      if (window.m_ShouldDraw)
+        window.App::Draw();
     };
     return 0;
   };

@@ -25,17 +25,19 @@ unset(MAKEGUI CACHE) # <---- this is important
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   target_compile_options(${PROJECT_NAME} PRIVATE  
-  /options:strict # unrecognized compiler options are an error
+  #/options:strict # unrecognized compiler options are an error
   /nologo #suppress copyright message    
   #/GA #optimize for Windows Application
   #/O1 # maximum optimizations (favor space)
   #/Os #  favor code space
-  /favor:INTEL64 #  favor code space
+  #/favor:INTEL64 #  favor code space
+
   #/analyze #Enable native analysis      
+  #/Wall #enable all warnings
+
   #/external:env:<var>      # location of external headers
   /external:anglebrackets # treat all headers included via <> as external
   /external:I "C://Program Files//Microsoft Visual Studio//2022//Community" #All recursive subdirectories of path are considered external
-  #/Wall #enable all warnings
   /external:W0
   )
   endif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

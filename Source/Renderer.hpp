@@ -14,9 +14,10 @@ protected:
     Renderer() = default;
     HRESULT Initialize();
     void SetPipeLine() const noexcept;
-    void UpdateViewPortSizeBuffer(float Width, float Height) const noexcept;
+    void UpdateViewPortSizeBuffer(float Width, float Height) noexcept;
     void UpdateFrameBuffer() noexcept;
     void SetViewPort(float Width, float Height) noexcept;
+    void SwitchTopology()noexcept;
     void Draw() const noexcept;
 
     std::unique_ptr<DeviceResource> m_pDeviceResource{};

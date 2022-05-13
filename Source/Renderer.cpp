@@ -9,20 +9,36 @@ using namespace ::DirectX;
 struct ViewPortSizeBuffer
 {
     explicit ViewPortSizeBuffer(float x, float y)
-        : ViewPortSize{x, y}, Resolution{1.0f, x / y} {};
+        : ViewPortSize{x, y}, aspectRatio{(x <= y) ? 1.0 : y / x, (x > y) ? 1.0f : x / y} {};
     DirectX::XMFLOAT2 ViewPortSize{};
-    DirectX::XMFLOAT2 Resolution{};
+    DirectX::XMFLOAT2 aspectRatio{};
 };
 
 struct FrameBuffer
 {
+    static XMMATRIX GetWorld(float angle) { return XMMatrixTranspose(XMMatrixRotationY(angle)); };
+    static XMMATRIX GetView()
+    {
+        XMVECTOR Eye = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
+        XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+        XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+        return XMMatrixTranspose(XMMatrixLookAtLH(Eye, At, Up));
+    };
+    static XMMATRIX GetProjection(D3D11_VIEWPORT &&ViewPort)
+    {
+        return XMMatrixTranspose(XMMatrixPerspectiveFovLH(XM_PIDIV2, ViewPort.Width / ViewPort.Height, 0.1f, 100.f));
+    };
 
-    explicit FrameBuffer(long long st, double deltaT)
-        : t{st / 1000.f,                 /// sec.milices
-            (st % (1000 * 60)) / 1000.f, // //sec.milices % 60 min
-            deltaT,                      // time delta
-            deltaT} {/* Log<Console>::Write(t.x, t.y, t.z);*/};
-    ::DirectX::XMFLOAT4 t{};
+    explicit FrameBuffer(long long st, float deltaT, D3D11_VIEWPORT &&ViewPort)
+        : t{static_cast<float>(st) / 1000.f, /// sec.milices
+            deltaT},
+          World{GetWorld(t.x)},
+          View{GetView()},
+          Projection{GetProjection(std::forward<D3D11_VIEWPORT>(ViewPort))} {/* Log<Console>::Write(t.x, t.y, t.z);*/};
+    XMFLOAT2 t{};
+    XMMATRIX World{};
+    XMMATRIX View{};
+    XMMATRIX Projection{};
 };
 
 HRESULT Renderer::Initialize()
@@ -36,20 +52,6 @@ HRESULT Renderer::Initialize()
         return hr;
     if (H_FAIL(hr = m_pDeviceResource->CreatePixelShaderFromFile(L"Pixel.so", &m_pPixelShader)))
         return hr;
-    // ComPtr<ID3DBlob> VSByteCode{};
-    //  if (H_FAIL(hr = m_pDeviceResource->CompileSOFromFile(L" main.hlsl", "VSMain", "vs_5_0", &VSByteCode)))
-    //      return hr;
-    // if (H_FAIL(hr = D3DReadFileToBlob(L"Vertex.so", &VSByteCode)))
-    //     return hr;
-    // if (H_FAIL(hr = m_pDeviceResource->CreateVertexShaderFromBlob(LayoutDescs.data(), LayoutDescs.size(), VSByteCode.Get(), &m_pVertexShader, &m_pInputLayout)))
-    //     return hr;
-    // ComPtr<ID3DBlob> PSByteCode{};
-    //  if (H_FAIL(hr = m_pDeviceResource->CompileSOFromFile(L" main.hlsl", "PSMain", "ps_5_0", &PSByteCode)))
-    //      return hr;
-    // if (H_FAIL(hr = D3DReadFileToBlob(L"Pixel.so", &PSByteCode)))
-    //     return hr;
-    // if (H_FAIL(hr = m_pDeviceResource->CreatePixelShaderFromBlob(PSByteCode.Get(), &m_pPixelShader)))
-    //     return hr;
     /**
      *     Create Constant Buffers
      */
@@ -94,7 +96,7 @@ void Renderer::SetPipeLine() const noexcept
     m_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_pContext->IASetInputLayout(m_pInputLayout.Get());
     m_pContext->IASetVertexBuffers(0u, 1u, buffers, strides, offsets);
-
+    // m_pContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0u);
     m_pContext->VSSetConstantBuffers(0, _countof(constBuffers), constBuffers);
     m_pContext->VSSetShader(m_pVertexShader.Get(), nullptr, 0u);
 
@@ -102,9 +104,23 @@ void Renderer::SetPipeLine() const noexcept
     m_pContext->PSSetShader(m_pPixelShader.Get(), nullptr, 0u);
 };
 
-void Renderer::UpdateViewPortSizeBuffer(float Width, float Height) const noexcept
+void Renderer::SwitchTopology() noexcept
 {
+    static UINT currentIndex{};
+    static D3D11_PRIMITIVE_TOPOLOGY s_TopologyList[]{
+        D3D11_PRIMITIVE_TOPOLOGY_LINELIST,
+        D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP,
+        D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+        D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
+    };
+    currentIndex = (1 + currentIndex) % _countof(s_TopologyList);
+    m_pContext->IASetPrimitiveTopology(s_TopologyList[currentIndex]);
+};
 
+void Renderer::UpdateViewPortSizeBuffer(float Width, float Height) noexcept
+{
+    m_ViewPort.Width = Width;
+    m_ViewPort.Height = Height;
     ViewPortSizeBuffer ViewPortSize{Width, Height};
     m_pContext->UpdateSubresource(
         m_pViewPortSizeBuffer.Get(),
@@ -115,7 +131,7 @@ void Renderer::UpdateFrameBuffer() noexcept
 {
 
     // Update Timer
-    FrameBuffer constantBuffer(Timer.Count<long>(), Timer.GetDelta<double>());
+    FrameBuffer constantBuffer(Timer.Count<long>(), Timer.GetDelta<float>(), std::forward<D3D11_VIEWPORT>(m_ViewPort));
     m_pContext->UpdateSubresource(
         m_pFrameBuffer.Get(),
         0, nullptr, &constantBuffer, 0, 0);
@@ -127,5 +143,5 @@ void Renderer::Draw() const noexcept
     m_pContext->ClearRenderTargetView(Renderer::m_pRTV.Get(), &RTVClearColor.x);
     m_pContext->RSSetViewports(1, &m_ViewPort);
     m_pContext->OMSetRenderTargets(1u, Renderer::m_pRTV.GetAddressOf(), nullptr);
-    m_pContext->Draw(6u, 0u);
+    m_pContext->Draw(36u, 0u);
 };

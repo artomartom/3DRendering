@@ -1,12 +1,11 @@
 #include "Func.hlsl"
 
 
-cbuffer ViewPortBuffer : register(b0){ float2 viewPortSize; float2  aspectRatio; };
 
 //  t - time since application start 
 //  t milisec from start (1.f = 1 sec)
 //  deltaT - time since last frame  
-cbuffer FrameBuffer : register(b1)
+cbuffer FrameBuffer : register(b0)
 { 
     float2 FrameTime; //   (  t  , (t % (1000 * 60 * 10))  , deltaT,deltaT)
     float4x4 World;

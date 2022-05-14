@@ -13,9 +13,11 @@ public:
     HRESULT CreateSizeDependentDeviceResources(
         _In_ const HWND &windowHandle,
         _In_ D3D11_VIEWPORT NewViewPort,
-        _In_opt_ ID3D11DeviceContext *pContext,
-        __inout_opt ID3D11Texture2D **ppRTVBuffer,
-        __inout_opt ID3D11RenderTargetView **ppRTV);
+        _In_ ID3D11DeviceContext *pContext,
+        _Inout_ ID3D11Texture2D **ppRTVBuffer,
+        _Inout_ ID3D11RenderTargetView **ppRTV,
+        _Inout_ ID3D11Texture2D **ppDepthStencil,
+        _Inout_ ID3D11DepthStencilView **ppDepthStencilView);
 
     HRESULT HandleDeviceRemoved() { return ERROR_CALL_NOT_IMPLEMENTED; };
     HRESULT Present() const noexcept { return m_pSwapChain->Present(1u, 0u); };

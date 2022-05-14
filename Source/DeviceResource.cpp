@@ -48,9 +48,11 @@ DeviceResource::DeviceResource(_COM_Outptr_ ID3D11DeviceContext **ppContext, _Ou
 HRESULT DeviceResource::CreateSizeDependentDeviceResources(
     _In_ const HWND &windowHandle,
     _In_ D3D11_VIEWPORT NewViewPort,
-    _In_opt_ ID3D11DeviceContext *pContext,
+    _In_ ID3D11DeviceContext *pContext,
     _Inout_ ID3D11Texture2D **ppRTVBuffer,
-    _Inout_ ID3D11RenderTargetView **ppRTV)
+    _Inout_ ID3D11RenderTargetView **ppRTV,
+    _Inout_ ID3D11Texture2D **ppDepthStencil,
+    _Inout_ ID3D11DepthStencilView **ppDepthStencilView)
 {
    HRESULT hr{};
 
@@ -63,8 +65,16 @@ HRESULT DeviceResource::CreateSizeDependentDeviceResources(
 
    if ((*ppRTV) != nullptr)
       assert((*ppRTV)->Release() == 0);
+
    if ((*ppRTVBuffer) != nullptr)
       assert((*ppRTVBuffer)->Release() == 0);
+
+   if ((*ppDepthStencil) != nullptr)
+      assert((*ppDepthStencil)->Release() == 0);
+
+   if ((*ppDepthStencilView) != nullptr)
+      assert((*ppDepthStencilView)->Release() == 0);
+
    pContext->Flush();
 
    if (m_pSwapChain)
@@ -108,9 +118,27 @@ HRESULT DeviceResource::CreateSizeDependentDeviceResources(
       if (H_FAIL(hr = m_pDXGIFactory->CreateSwapChainForHwnd(m_pDevice.Get(), windowHandle, &d_swapChain, &d_fullScreenSwapChain, nullptr, &m_pSwapChain)))
          return hr;
    };
+
+   
+
    if (H_FAIL(hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)ppRTVBuffer)))
       return hr;
    if (H_FAIL(hr = m_pDevice->CreateRenderTargetView(*ppRTVBuffer, 0, ppRTV)))
+      return hr;
+
+      // Create a depth stencil view for use with 3D rendering if needed.
+   CD3D11_TEXTURE2D_DESC d_depthStencil(
+       DXGI_FORMAT_B8G8R8A8_UNORM,
+       static_cast<UINT>(NewViewPort.Width),
+       static_cast<UINT>(NewViewPort.Height),
+       1, // This depth stencil view has only one texture.
+       1, // Use a single mipmap level.
+       D3D11_BIND_DEPTH_STENCIL);
+
+   if (H_FAIL(hr = m_pDevice->CreateTexture2D(&d_depthStencil, nullptr, ppDepthStencil)))
+      return hr;
+
+   if (H_FAIL(hr = m_pDevice->CreateDepthStencilView(*ppDepthStencil, nullptr, ppDepthStencilView)))
       return hr;
 
    return S_OK;

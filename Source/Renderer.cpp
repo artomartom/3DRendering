@@ -6,41 +6,6 @@
 using ::Microsoft::WRL::ComPtr;
 using namespace ::DirectX;
 
-struct ViewPortSizeBuffer
-{
-    explicit ViewPortSizeBuffer(float x, float y)
-        : ViewPortSize{x, y}, aspectRatio{(x <= y) ? 1.0 : y / x, (x > y) ? 1.0f : x / y} {};
-    DirectX::XMFLOAT2 ViewPortSize{};
-    DirectX::XMFLOAT2 aspectRatio{};
-};
-
-struct FrameBuffer
-{
-    static XMMATRIX GetWorld(float angle) { return XMMatrixTranspose(XMMatrixRotationY(angle)); };
-    static XMMATRIX GetView()
-    {
-        XMVECTOR Eye = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
-        XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-        XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-        return XMMatrixTranspose(XMMatrixLookAtLH(Eye, At, Up));
-    };
-    static XMMATRIX GetProjection(D3D11_VIEWPORT &&ViewPort)
-    {
-        return XMMatrixTranspose(XMMatrixPerspectiveFovLH(XM_PIDIV2, ViewPort.Width / ViewPort.Height, 0.1f, 100.f));
-    };
-
-    explicit FrameBuffer(long long st, float deltaT, D3D11_VIEWPORT &&ViewPort)
-        : t{static_cast<float>(st) / 1000.f, /// sec.milices
-            deltaT},
-          World{GetWorld(t.x)},
-          View{GetView()},
-          Projection{GetProjection(std::forward<D3D11_VIEWPORT>(ViewPort))} {/* Log<Console>::Write(t.x, t.y, t.z);*/};
-    XMFLOAT2 t{};
-    XMMATRIX World{};
-    XMMATRIX View{};
-    XMMATRIX Projection{};
-};
-
 HRESULT Renderer::Initialize()
 {
     HRESULT hr{};
@@ -53,22 +18,10 @@ HRESULT Renderer::Initialize()
     if (H_FAIL(hr = m_pDeviceResource->CreatePixelShaderFromFile(L"Pixel.so", &m_pPixelShader)))
         return hr;
     /**
-     *     Create Constant Buffers
+     *     Create Constant Buffer
      */
     {
-
-        // ViewPortSizeBuffer   /*    */ m_pViewPortSizeBuffer
-        // FrameBuffer   /*           */ m_pFrameBuffer
-
         D3D11_BUFFER_DESC d_ConstBuffer{};
-
-        d_ConstBuffer.Usage = D3D11_USAGE_DEFAULT;
-        d_ConstBuffer.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        d_ConstBuffer.CPUAccessFlags = 0;
-        d_ConstBuffer.ByteWidth = (sizeof(ViewPortSizeBuffer) + 15) / 16 * 16;
-        if (H_FAIL(hr = m_pDeviceResource->GetDevice()->CreateBuffer(&d_ConstBuffer, nullptr, &m_pViewPortSizeBuffer)))
-            return hr;
-
         d_ConstBuffer.Usage = D3D11_USAGE_DEFAULT;
         d_ConstBuffer.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         d_ConstBuffer.CPUAccessFlags = 0;
@@ -89,7 +42,6 @@ void Renderer::SetPipeLine() const noexcept
     UINT offsets[]{0u, 0u};
 
     ID3D11Buffer *constBuffers[]{
-        m_pViewPortSizeBuffer.Get(),
         m_pFrameBuffer.Get(),
     };
 
@@ -117,24 +69,19 @@ void Renderer::SwitchTopology() noexcept
     m_pContext->IASetPrimitiveTopology(s_TopologyList[currentIndex]);
 };
 
-void Renderer::UpdateViewPortSizeBuffer(float Width, float Height) noexcept
+void Renderer::UpdateViewPortSize(float Width, float Height) noexcept
 {
     m_ViewPort.Width = Width;
     m_ViewPort.Height = Height;
-    ViewPortSizeBuffer ViewPortSize{Width, Height};
-    m_pContext->UpdateSubresource(
-        m_pViewPortSizeBuffer.Get(),
-        0, nullptr, &ViewPortSize, 0, 0);
+    m_FrameBuffer.SetProjection(m_ViewPort);
 };
 
 void Renderer::UpdateFrameBuffer() noexcept
 {
-
     // Update Timer
-    FrameBuffer constantBuffer(Timer.Count<long>(), Timer.GetDelta<float>(), std::forward<D3D11_VIEWPORT>(m_ViewPort));
-    m_pContext->UpdateSubresource(
-        m_pFrameBuffer.Get(),
-        0, nullptr, &constantBuffer, 0, 0);
+    m_FrameBuffer.SetTime(Timer.Count<long>(), Timer.GetDelta<float>());
+    m_FrameBuffer.SetWorld(m_FrameBuffer.GetTime().x);
+    m_pContext->UpdateSubresource(m_pFrameBuffer.Get(), 0, nullptr, &m_FrameBuffer, 0, 0);
 };
 
 void Renderer::Draw() const noexcept
@@ -142,6 +89,6 @@ void Renderer::Draw() const noexcept
 
     m_pContext->ClearRenderTargetView(Renderer::m_pRTV.Get(), &RTVClearColor.x);
     m_pContext->RSSetViewports(1, &m_ViewPort);
-    m_pContext->OMSetRenderTargets(1u, Renderer::m_pRTV.GetAddressOf(), nullptr);
+    m_pContext->OMSetRenderTargets(1u, Renderer::m_pRTV.GetAddressOf(), m_pDepthStencilView.Get());
     m_pContext->Draw(36u, 0u);
 };

@@ -41,9 +41,12 @@ public:
       CASE(VK_ESCAPE, { CoreApp::Close(); });
       CASE(VK_SPACE, { Renderer::Timer.Switch(); });
       CASE(VK_TAB, { Renderer::SwitchTopology(); });
+      CASE('W', { Renderer::m_Camera.MoveCameraF(Renderer::Timer.GetDelta<float>()); });
+      CASE('A', { Renderer::m_Camera.MoveCameraL(Renderer::Timer.GetDelta<float>()); });
+      CASE('S', { Renderer::m_Camera.MoveCameraB(Renderer::Timer.GetDelta<float>()); });
+      CASE('D', { Renderer::m_Camera.MoveCameraR(Renderer::Timer.GetDelta<float>()); });
     }
   };
-
   void OnCreate(_In_ const ::Window::CreationArgs &args) noexcept
   {
     HRESULT hr{};
@@ -86,9 +89,9 @@ public:
     else
     {
       Renderer::UpdateViewPortSize(NewWidth, NewHeight);
-      m_pDeviceResource->CreateSizeDependentDeviceResources(m_Handle, m_ViewPort, m_pContext.Get(),
+     H_FAIL( m_pDeviceResource->CreateSizeDependentDeviceResources(m_Handle, m_ViewPort, m_pContext.Get(),
                                                             &m_pRenderTarget, &m_pRTV,
-                                                            &m_pDepthStencil, &m_pDepthStencilView);
+                                                            &m_pDepthStencil, &m_pDepthStencilView));
     }
   };
 

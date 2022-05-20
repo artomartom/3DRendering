@@ -2,6 +2,8 @@
 #ifndef FRAMEBUFFER_HPP
 #define FRAMEBUFFER_HPP
 
+#include "Camera.hpp"
+
 /**
  * represents constant buffer layout in vertex shader, which stors wvp matrix and time variable.
  * updated every frame
@@ -15,10 +17,8 @@ public:
         SetWorld(1.0f);
     };
     ::DirectX::XMFLOAT2 GetTime() const noexcept { return time; };
-
     void SetTime(long long st, float deltaT) noexcept
     {
-
         time.x = static_cast<float>(st) / 1000.f;
         time.y = deltaT;
     };
@@ -34,6 +34,12 @@ public:
         XMVECTOR At = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
         XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
         View = XMMatrixTranspose(XMMatrixLookAtLH(Eye, At, Up));
+    };
+    void SetWorldAndView(Camera &camera) noexcept
+    {
+        using namespace ::DirectX;
+        World = XMMatrixTranspose());
+        View = XMMatrixTranspose(camera.GetView());
     };
     void SetProjection(D3D11_VIEWPORT &ViewPort) noexcept
     {

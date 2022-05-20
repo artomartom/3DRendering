@@ -50,9 +50,7 @@ float4 VSMain(uint VertID:SV_VertexID, uint InstID:SV_InstanceID) : SV_Position
     uint index = indices[VertID];
     
     float4 pos = float4(cube[index] *1.9,1.0) ;
-    pos = mul( pos, World );
-    pos = mul( pos, View );
-    pos = mul( pos, Projection );
+    pos = mul( mul( mul( pos, World ), View ), Projection );
     return  pos;  
 };
 

@@ -1,16 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 project(Occlusion3D)
 set(CMAKE_CXX_STANDARD 20)
-add_executable(${PROJECT_NAME}
-  ${PROJECT_SOURCE_DIR}/App.cpp
-  ${PROJECT_SOURCE_DIR}/DeviceResource.cpp
-  ${PROJECT_SOURCE_DIR}/Renderer.cpp
-  
-)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/Visual)
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/Shader/Debug)
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/Shader/Release)
+file (GLOB_RECURSE SOURCES "./*.cpp" )
+add_executable(${PROJECT_NAME} ${SOURCES} )
+
 
 option(MAKEGUI "build  as a GUI rather then console app" ON)
 
@@ -31,10 +25,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   #/O1 # maximum optimizations (favor space)
   #/Os #  favor code space
   #/favor:INTEL64 #  favor code space
-
   #/analyze #Enable native analysis      
   #/Wall #enable all warnings
-
   #/external:env:<var>      # location of external headers
   /external:anglebrackets # treat all headers included via <> as external
   /external:I "C://Program Files//Microsoft Visual Studio//2022//Community" #All recursive subdirectories of path are considered external
@@ -43,6 +35,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   endif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   
 
-target_link_libraries(${PROJECT_NAME} PRIVATE D3D11 DXGI dxguid d3dcompiler )
-
-target_precompile_headers(${PROJECT_NAME} PRIVATE pch.hpp)
+  target_link_libraries(${PROJECT_NAME} PRIVATE D3D11 DXGI dxguid d3dcompiler )
+  
+  target_precompile_headers(${PROJECT_NAME} PRIVATE pch.hpp)

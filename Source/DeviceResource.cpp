@@ -119,16 +119,14 @@ HRESULT DeviceResource::CreateSizeDependentDeviceResources(
          return hr;
    };
 
-   
-
    if (H_FAIL(hr = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)ppRTVBuffer)))
       return hr;
    if (H_FAIL(hr = m_pDevice->CreateRenderTargetView(*ppRTVBuffer, 0, ppRTV)))
       return hr;
 
-      // Create a depth stencil view for use with 3D rendering if needed.
+   // Create a depth stencil view for use with 3D rendering if needed.
    CD3D11_TEXTURE2D_DESC d_depthStencil(
-       DXGI_FORMAT_B8G8R8A8_UNORM,
+       DXGI_FORMAT_B8G8R8A8_UNORM, // DXGI_FORMAT_D24_UNORM_S8_UINT,
        static_cast<UINT>(NewViewPort.Width),
        static_cast<UINT>(NewViewPort.Height),
        1, // This depth stencil view has only one texture.

@@ -17,7 +17,6 @@ protected:
     void SetPipeLine() const noexcept;
     void UpdateViewPortSize(float Width, float Height) noexcept;
     void UpdateFrameBuffer() noexcept;
-    void SetViewPort(float Width, float Height) noexcept;
     void SwitchTopology() noexcept;
     void Draw() const noexcept;
 
@@ -25,7 +24,7 @@ protected:
     FrameBuffer m_FrameBuffer{};
     D3D11_VIEWPORT m_ViewPort{0.f, 0.f, 0.f, 0.f, 0.f, 1.f};
     DirectX::XMFLOAT4 RTVClearColor{0.0f, 0.0f, 0.0f, 0.99f};
-
+    Camera m_Camera{};
     Time::Timer Timer{};
 
     ::Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pContext{};

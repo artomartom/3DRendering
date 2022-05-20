@@ -12,7 +12,6 @@ HRESULT Renderer::Initialize()
     const static std::array<D3D11_INPUT_ELEMENT_DESC, 1> LayoutDescs{
         D3D11_INPUT_ELEMENT_DESC{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
-
     if (H_FAIL(hr = m_pDeviceResource->CreateVertexShaderFromFile(L"Vertex.so", LayoutDescs.data(), LayoutDescs.size(), &m_pVertexShader, &m_pInputLayout)))
         return hr;
     if (H_FAIL(hr = m_pDeviceResource->CreatePixelShaderFromFile(L"Pixel.so", &m_pPixelShader)))
@@ -29,10 +28,8 @@ HRESULT Renderer::Initialize()
         if (H_FAIL(hr = m_pDeviceResource->GetDevice()->CreateBuffer(&d_ConstBuffer, nullptr, &m_pFrameBuffer)))
             return hr;
     };
-
     return S_OK;
 };
-
 void Renderer::SetPipeLine() const noexcept
 {
 
@@ -55,7 +52,6 @@ void Renderer::SetPipeLine() const noexcept
     m_pContext->PSSetConstantBuffers(0, _countof(constBuffers), constBuffers);
     m_pContext->PSSetShader(m_pPixelShader.Get(), nullptr, 0u);
 };
-
 void Renderer::SwitchTopology() noexcept
 {
     static UINT currentIndex{};
@@ -68,22 +64,20 @@ void Renderer::SwitchTopology() noexcept
     currentIndex = (1 + currentIndex) % _countof(s_TopologyList);
     m_pContext->IASetPrimitiveTopology(s_TopologyList[currentIndex]);
 };
-
 void Renderer::UpdateViewPortSize(float Width, float Height) noexcept
 {
     m_ViewPort.Width = Width;
     m_ViewPort.Height = Height;
     m_FrameBuffer.SetProjection(m_ViewPort);
 };
-
 void Renderer::UpdateFrameBuffer() noexcept
 {
+    m_Camera.Update();
     // Update Timer
     m_FrameBuffer.SetTime(Timer.Count<long>(), Timer.GetDelta<float>());
-    m_FrameBuffer.SetWorld(m_FrameBuffer.GetTime().x);
+    m_FrameBuffer.SetWorldAndView(m_Camera);
     m_pContext->UpdateSubresource(m_pFrameBuffer.Get(), 0, nullptr, &m_FrameBuffer, 0, 0);
 };
-
 void Renderer::Draw() const noexcept
 {
 

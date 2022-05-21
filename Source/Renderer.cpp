@@ -4,7 +4,6 @@
 #include "Renderer.hpp"
 
 using ::Microsoft::WRL::ComPtr;
-using namespace ::DirectX;
 
 HRESULT Renderer::Initialize()
 {
@@ -20,13 +19,28 @@ HRESULT Renderer::Initialize()
      *     Create Constant Buffer
      */
     {
+
+        auto pDevice{m_pDeviceResource->GetDevice()};
         D3D11_BUFFER_DESC d_ConstBuffer{};
         d_ConstBuffer.Usage = D3D11_USAGE_DEFAULT;
         d_ConstBuffer.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         d_ConstBuffer.CPUAccessFlags = 0;
-        d_ConstBuffer.ByteWidth = (sizeof(FrameBuffer) + 15) / 16 * 16;
-        if (H_FAIL(hr = m_pDeviceResource->GetDevice()->CreateBuffer(&d_ConstBuffer, nullptr, &m_pFrameBuffer)))
-            return hr;
+
+        {
+            d_ConstBuffer.ByteWidth = (sizeof(ModelBuffer) + 15) / 16 * 16;
+            if (H_FAIL(hr = pDevice->CreateBuffer(&d_ConstBuffer, nullptr, &m_pModelBuffer)))
+                return hr;
+        };
+        {
+            d_ConstBuffer.ByteWidth = (sizeof(FrameBuffer) + 15) / 16 * 16;
+            if (H_FAIL(hr = pDevice->CreateBuffer(&d_ConstBuffer, nullptr, &m_pFrameBuffer)))
+                return hr;
+        };
+        {
+            d_ConstBuffer.ByteWidth = (sizeof(ProjectionBuffer) + 15) / 16 * 16;
+            if (H_FAIL(hr = pDevice->CreateBuffer(&d_ConstBuffer, nullptr, &m_pProjBuffer)))
+                return hr;
+        };
     };
     return S_OK;
 };
@@ -39,10 +53,12 @@ void Renderer::SetPipeLine() const noexcept
     UINT offsets[]{0u, 0u};
 
     ID3D11Buffer *constBuffers[]{
+        m_pModelBuffer.Get(),
         m_pFrameBuffer.Get(),
+        m_pProjBuffer.Get(),
     };
 
-    m_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
     m_pContext->IASetInputLayout(m_pInputLayout.Get());
     m_pContext->IASetVertexBuffers(0u, 1u, buffers, strides, offsets);
     // m_pContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0u);
@@ -66,23 +82,39 @@ void Renderer::SwitchTopology() noexcept
 };
 void Renderer::UpdateViewPortSize(float Width, float Height) noexcept
 {
-    m_ViewPort.Width = Width;
-    m_ViewPort.Height = Height;
-    m_FrameBuffer.SetProjection(m_ViewPort);
+    using namespace ::DirectX;
+    ProjectionBuffer Buffer{};
+    m_viewPort.Width = Width;
+    m_viewPort.Height = Height;
+    m_camera.SetProjParams(XM_PI / 4, Width / Height, 0.01f, 100.0f);
+    XMStoreFloat4x4(&Buffer.m_projection, XMMatrixTranspose(m_camera.Projection()));
+    m_pContext->UpdateSubresource(m_pProjBuffer.Get(), 0, nullptr, &Buffer, 0, 0);
 };
 void Renderer::UpdateFrameBuffer() noexcept
 {
-    m_Camera.Update();
+    using namespace ::DirectX;
+    FrameBuffer frameBuffer{};
     // Update Timer
-    m_FrameBuffer.SetTime(Timer.Count<long>(), Timer.GetDelta<float>());
-    m_FrameBuffer.SetWorldAndView(m_Camera);
-    m_pContext->UpdateSubresource(m_pFrameBuffer.Get(), 0, nullptr, &m_FrameBuffer, 0, 0);
+    m_timer.Count();
+
+    frameBuffer.m_time.x = m_timer.GetCount<float>() / 1000.f;
+    frameBuffer.m_time.y = m_timer.GetDelta<float>();
+    // static float camX{};
+    // camX += 1.0f;
+    // m_camera.Eye({sin(XMConvertToRadians(camX)), 0.0f, cos(XMConvertToRadians(camX) + 2.0f)});
+    XMStoreFloat4x4(&frameBuffer.m_view, XMMatrixTranspose(m_camera.View()));
+    m_pContext->UpdateSubresource(m_pFrameBuffer.Get(), 0, nullptr, &frameBuffer, 0, 0);
 };
 void Renderer::Draw() const noexcept
 {
+    using namespace ::DirectX;
+    ModelBuffer modelBuffer{};
+    XMStoreFloat4x4(&modelBuffer.m_model, XMMatrixTranspose(m_cube.Model()));
+    m_pContext->UpdateSubresource(m_pModelBuffer.Get(), 0, nullptr, &modelBuffer, 0, 0);
 
-    m_pContext->ClearRenderTargetView(Renderer::m_pRTV.Get(), &RTVClearColor.x);
-    m_pContext->RSSetViewports(1, &m_ViewPort);
-    m_pContext->OMSetRenderTargets(1u, Renderer::m_pRTV.GetAddressOf(), m_pDepthStencilView.Get());
+    m_pContext->ClearRenderTargetView(Renderer::m_pRTV.Get(), &m_RTVClearColor.x);
+    m_pContext->RSSetViewports(1, &m_viewPort);
+    //    m_pContext->OMSetRenderTargets(1u, Renderer::m_pRTV.GetAddressOf(), m_pDepthStencilView.Get()); //something missing
+    m_pContext->OMSetRenderTargets(1u, Renderer::m_pRTV.GetAddressOf(), nullptr);
     m_pContext->Draw(36u, 0u);
 };

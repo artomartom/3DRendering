@@ -1,17 +1,24 @@
 #include "Func.hlsl"
 
 
+cbuffer ModelBuffer : register(b0)
+{
+    matrix model;
+};  
 
 //  t - time since application start 
 //  t milisec from start (1.f = 1 sec)
 //  deltaT - time since last frame  
-cbuffer FrameBuffer : register(b0)
+cbuffer FrameBuffer : register(b1)
 { 
-    float2 FrameTime; //   (  t  , (t % (1000 * 60 * 10))  , deltaT,deltaT)
-    float4x4 World;
-    float4x4 View;
-    float4x4 Projection;
+    matrix view;
+    float2 frameTime; //   (  t  , (t % (1000 * 60 * 10))  , deltaT,deltaT)
 }; 
+
+cbuffer  ProjectionBuffer : register(b2)
+{
+    matrix projection;
+};  
 static float3 cube[8] = 
 {   
     {-.5f, +.5f,+.5f},
@@ -49,8 +56,8 @@ float4 VSMain(uint VertID:SV_VertexID, uint InstID:SV_InstanceID) : SV_Position
 
     uint index = indices[VertID];
     
-    float4 pos = float4(cube[index] *1.9,1.0) ;
-    pos = mul( mul( mul( pos, World ), View ), Projection );
+    float4 pos = float4(cube[index] *.8f,1.0) ;
+    pos = mul( mul( mul( pos, model ), view ), projection );
     return  pos;  
 };
 

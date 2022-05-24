@@ -13,6 +13,7 @@
     action;                   \
     break
 
+
 class App : public CoreApp, public Renderer, public Controller
 {
 
@@ -103,35 +104,7 @@ public:
   };
 
   void Draw() noexcept
-  {
-    auto imGuiRender{
-        []()
-        {
-          static float f = 0.0f;
-          static int counter = 0;
-          static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-          // ImGui::StyleColorsClassic();
-          ImGui_ImplDX11_NewFrame();
-          ImGui_ImplWin32_NewFrame();
-          ImGui::NewFrame();
-
-          ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
-
-          ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-
-          ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
-          ImGui::ColorEdit3("clear color", (float *)&clear_color); // Edit 3 floats representing a color
-
-          if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++;
-          ImGui::SameLine();
-          ImGui::Text("counter = %d", counter);
-
-          ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-          ImGui::End();
-          ImGui::Render();
-          ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-        }};
+  { 
 
     if (m_shouldDraw && !m_shouldClose)
     {
@@ -143,8 +116,7 @@ public:
        *  to sleep until the next VSync. This ensures we don't waste any cycles rendering
        *  frames that will never be displayed to the screen.
        */
-
-      imGuiRender();
+ 
       H_FAIL(m_pDeviceResource->Present());
     };
     DBG_ONLY(m_pDeviceResource->DebugInterface::PullDebugMessage());
@@ -172,23 +144,7 @@ private:
       Log<File>::Write(L"App Creation canceled");
       return 1;
     };
-
-#ifndef IMGUI_DISABLE
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(window.m_Handle);
-    ImGui_ImplDX11_Init(window.m_pDeviceResource->GetDevice().Get(), window.m_pContext.Get());
-
-#endif
+ 
     ::MSG messages{};
     while (messages.message != WM_QUIT)
     {
@@ -198,8 +154,7 @@ private:
 
       if (window.m_shouldDraw)
         window.App::Draw();
-    };
-    ImGui_ImplWin32_Shutdown();
+    }; 
     return 0;
   };
 };

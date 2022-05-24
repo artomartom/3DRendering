@@ -24,8 +24,8 @@ public:
         m_lastCursorPos.x = newPoint.x;
         m_lastCursorPos.y = newPoint.y;
 
-        m_pitch -= deltaPos.y * cursorSpeed;
-        m_yaw += deltaPos.x * cursorSpeed;
+        m_pitch -= static_cast<float>(deltaPos.y) * cursorSpeed;
+        m_yaw += static_cast<float>(deltaPos.x) * cursorSpeed;
 
         float limit = XM_PI / 2.0f - 0.01f;
         m_pitch = __max(-limit, m_pitch);
@@ -40,11 +40,13 @@ public:
             m_yaw += XM_PI * 2.0f;
         }
     };
+        ::DirectX::XMUINT2 LastPos()const noexcept{return m_lastCursorPos;};
+
 
     // args.pos.x / m_viewPort.Width, 0.f, args.pos.y / m_viewPort.Height
 private:
-    ::DirectX::XMFLOAT2 m_lastCursorPos{};
+    ::DirectX::XMUINT2 m_lastCursorPos{};
     float m_pitch;
     float m_yaw;
-    static constexpr float cursorSpeed{.005f};
+    static constexpr float cursorSpeed{.0001f};
 };

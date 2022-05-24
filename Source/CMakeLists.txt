@@ -5,10 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 file (GLOB SOURCES "./*.cpp" )
 add_executable(${PROJECT_NAME} ${SOURCES} )
  
-
-                                     
-
-
 option(MAKEGUI "build  as a GUI rather then console app" ON)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/ImGui)

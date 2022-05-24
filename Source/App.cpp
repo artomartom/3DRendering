@@ -8,10 +8,6 @@
 #define DXMCOMPAT
 #include "dxmCompat.hpp"
 
-#ifndef IMGUI_DISABLE
-#include "ImGuiMngr.hpp"
-#endif // IMGUI_DISABLE
-
 #define CASE(message, action) \
   case message:               \
     action;                   \
@@ -28,7 +24,7 @@ public:
   static int AppEntry(HINSTANCE hinst)
   {
     DBG_ONLY(_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF));
-    PeekRun(Window::CoreWindow<App>{hinst, {550, 50, 1200, 700}});
+    PeekRun(Window::CoreWindow<App>{hinst, {50, 50, 1200, 1000}});
     MessageBeep(5);
     return 0;
   };
@@ -45,7 +41,7 @@ public:
   void OnCursorMove(_In_ const ::Window::CursorArgs &args) noexcept
   {
     Controller::CursorMoved(args.pos);
-    m_camera.LookDirection(Controller::LookDirection());
+    // m_camera.LookDirection(Controller::LookDirection());
   };
 
   void OnKeyStroke(_In_ const ::Window::KeyEventArgs &args) noexcept
@@ -74,7 +70,7 @@ public:
       {
         Renderer::SetPipeLine();
 #ifndef IMGUI_DISABLE
-        m_pImGui = std::make_unique<IMGUI::IMGUI>(m_handle, m_pDeviceResource->GetDevice().Get(), m_pContext.Get());
+        m_pImGui = std::make_unique<IMGUI::IMGUI>( m_pDeviceResource->GetDevice().Get(), m_pContext.Get(),m_handle);
 #endif // IMGUI_DISABLE
         return;
       };
@@ -116,11 +112,9 @@ public:
 #ifndef IMGUI_DISABLE
       m_pImGui->RenderFrame([&]()
                             {
-                               
-                              ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
-                              ImGui::ColorEdit3("clear color",  Renderer::m_RTVClearColor); // Edit 3 floats representing a color
-                              ImGui::Text("(%.1f FPS)", ImGui::GetIO().Framerate);
-                              ImGui::End(); });
+                              //                              ImGui::ColorEdit3("clear color",  Renderer::m_RTVClearColor); // Edit 3 floats representing a color
+                              m_camera.ImGuiWindow();
+                            });
 #endif // IMGUI_DISABLE
 
       H_FAIL(m_pDeviceResource->Present());

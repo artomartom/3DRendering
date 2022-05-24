@@ -58,20 +58,6 @@ void Camera::MoveR(float deltaT) noexcept
     XMStoreFloat4x4(&m_viewMatrix, view);
     XMStoreFloat4x4(&m_inverseView, inverseView);
 
-    // Log<File>::Write(L"\neye", m_eye.x, m_eye.y, m_eye.z);
-    // Log<File>::Write(L"\nm_lookAt", m_lookAt.x, m_lookAt.y, m_lookAt.z);
-    // Log<File>::Write(L"\nm_up", m_up.x, m_up.y, m_up.z);
-    // Log<File>::Write(L"\nview",
-    //                  view.r[0].m128_f32[0], view.r[0].m128_f32[1], view.r[0].m128_f32[2], view.r[0].m128_f32[3], '\n',
-    //                  view.r[1].m128_f32[0], view.r[1].m128_f32[1], view.r[1].m128_f32[2], view.r[0].m128_f32[3], '\n',
-    //                  view.r[2].m128_f32[0], view.r[2].m128_f32[1], view.r[2].m128_f32[2], view.r[0].m128_f32[3], '\n',
-    //                  view.r[3].m128_f32[0], view.r[3].m128_f32[1], view.r[3].m128_f32[2], view.r[0].m128_f32[3]);
-    // Log<File>::Write(L"\ninverseview",
-    //                  inverseView.r[0].m128_f32[0], inverseView.r[0].m128_f32[1], inverseView.r[0].m128_f32[2], inverseView.r[0].m128_f32[3], '\n',
-    //                  inverseView.r[1].m128_f32[0], inverseView.r[1].m128_f32[1], inverseView.r[1].m128_f32[2], inverseView.r[0].m128_f32[3], '\n',
-    //                  inverseView.r[2].m128_f32[0], inverseView.r[2].m128_f32[1], inverseView.r[2].m128_f32[2], inverseView.r[0].m128_f32[3], '\n',
-    //                  inverseView.r[3].m128_f32[0], inverseView.r[3].m128_f32[1], inverseView.r[3].m128_f32[2], inverseView.r[0].m128_f32[3]);
-
     // The axis basis vectors and camera position are stored inside the
     // position matrix in the 4 rows of the camera's world matrix.
     // To figure out the yaw/pitch of the camera, we just need the Z basis vector.

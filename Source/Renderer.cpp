@@ -8,13 +8,15 @@ using ::Microsoft::WRL::ComPtr;
 HRESULT Renderer::Initialize()
 {
     HRESULT hr{};
-    const static std::array<D3D11_INPUT_ELEMENT_DESC, 1> LayoutDescs{
+    const static std::array<D3D11_INPUT_ELEMENT_DESC, 1> layoutDescs{
         D3D11_INPUT_ELEMENT_DESC{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
-    if (H_FAIL(hr = m_pDeviceResource->CreateVertexShaderFromFile(L"Vertex.so", LayoutDescs.data(), LayoutDescs.size(), &m_pVertexShader, &m_pInputLayout)))
+
+    if (H_FAIL(hr = m_pDeviceResource->CreateVertexShaderFromFile(L"Vertex.so", layoutDescs.data(), layoutDescs.size(), &m_pVertexShader, &m_pInputLayout)))
         return hr;
     if (H_FAIL(hr = m_pDeviceResource->CreatePixelShaderFromFile(L"Pixel.so", &m_pPixelShader)))
         return hr;
+
     /**
      *     Create Constant Buffer
      */
@@ -112,7 +114,7 @@ void Renderer::Draw() const noexcept
     XMStoreFloat4x4(&modelBuffer.m_model, XMMatrixTranspose(m_cube.Model()));
     m_pContext->UpdateSubresource(m_pModelBuffer.Get(), 0, nullptr, &modelBuffer, 0, 0);
 
-    m_pContext->ClearRenderTargetView(Renderer::m_pRTV.Get(), &m_RTVClearColor.x);
+    m_pContext->ClearRenderTargetView(Renderer::m_pRTV.Get(), m_RTVClearColor);
     m_pContext->RSSetViewports(1, &m_viewPort);
     //    m_pContext->OMSetRenderTargets(1u, Renderer::m_pRTV.GetAddressOf(), m_pDepthStencilView.Get()); //something missing
     m_pContext->OMSetRenderTargets(1u, Renderer::m_pRTV.GetAddressOf(), nullptr);

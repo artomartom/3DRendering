@@ -40,12 +40,11 @@ protected:
     void Draw() const noexcept;
 
     std::unique_ptr<DeviceResource> m_pDeviceResource{};
-
     D3D11_VIEWPORT m_viewPort{0.f, 0.f, 0.f, 0.f, 0.f, 1.f};
-    DirectX::XMFLOAT4 m_RTVClearColor{0.0f, 0.0f, 0.0f, 0.99f};
     Camera m_camera{};
     Time::Timer m_timer{};
     Object m_cube{};
+    float m_RTVClearColor[4]{0.0f, 0.0f, 0.0f, 0.99f};
 
     ::Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pContext{};
     ::Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pRenderTarget{};
